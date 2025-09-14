@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DoPi — Testnet</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>DoPi — freelance mini-marketplace</h1>
+    <p>Это тестовая версия (Testnet). Здесь можно добавить задание и увидеть его в списке.</p>
+
+    <h2>Добавить задание</h2>
+    <form id="jobForm">
+      <label>Название*<br/><input name="title" required /></label><br/>
+      <label>Описание<br/><textarea name="description" rows="3"></textarea></label><br/>
+      <label>Цена (Pi)<br/><input name="price_pi" type="number" step="0.01" value="0" /></label><br/>
+      <button type="submit">Сохранить</button>
+    </form>
+
+    <h2>Список заданий</h2>
+    <div id="jobs"></div>
+  </div>
+
+  <script>
+    const jobsBox = document.getElementById('jobs');
+    const form = document.getElementById('jobForm');
+
+    async function loadJobs() {
+      const r = await fetch('/api/jobs');
+      const data = await r.json();
+      jobsBox.innerHTML = data.length
+        ? data.map(j => `<div class="job"><b>${j.title}</b> — ${j.price_pi} Pi<br/>${j.description||''}</div>`).join('')
+        : '<i>Пока пусто</i>';
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const fd = new FormData(form);
+      const payload = {
+        title: fd.get('title'),
+        description: fd.get('description'),
+        price_pi: parseFloat(fd.get('price_pi') || '0')
+      };
+      const r = await fetch('/api/jobs', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify(payload)
+      });
+      if (r.ok) { form.reset(); await loadJobs(); }
+      else { alert('Ошибка сохранения'); }
+    });
+
+    loadJobs();
+  </script>
+</body>
+</html>
